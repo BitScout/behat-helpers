@@ -11,11 +11,11 @@
 
 namespace Ekino\BehatHelpers;
 
-use Behat\Mink\Exception\ExpectationException;
-use Behat\MinkExtension\Context\RawMinkContext;
+use Behat\Mink\Exception\ElementNotFoundException;
 
 /**
  * @author Rémi Marseille <remi.marseille@ekino.com>
+ * @author Benoit de Jacobet <benoit.de-jacobet@ekino.com>
  */
 trait ExtraSessionTrait
 {
@@ -25,6 +25,17 @@ trait ExtraSessionTrait
     public function maximizeWindowOnBeforeScenario()
     {
         $this->getSession()->getDriver()->maximizeWindow();
+    }
+
+    /**
+     * @When /^I scroll to (\d+) and (\d+)?$/
+     *
+     * @param int $x
+     * @param int $y
+     */
+    public function scrollTo($x, $y)
+    {
+        $this->getSession()->executeScript("(function(){window.scrollTo($x, $y);})();");
     }
 
     /**
@@ -40,12 +51,12 @@ trait ExtraSessionTrait
     /**
      * Wait for the given css element being visible.
      *
+     * @Given /^I wait for "([^"]*)" element being visible for (\d+) seconds$/
+     *
      * @param string $element
      * @param int    $seconds
      *
      * @return bool
-     *
-     * @Given /^I wait for "([^"]*)" element being visible for (\d+) seconds$/
      */
     public function iWaitForCssElementBeingVisible($element, $seconds)
     {
@@ -55,12 +66,12 @@ trait ExtraSessionTrait
     /**
      * Wait for the given css element being masked.
      *
+     * @Given /^I wait for "([^"]*)" element being invisible for (\d+) seconds$/
+     *
      * @param string $element
      * @param int    $seconds
      *
      * @return bool
-     *
-     * @Given /^I wait for "([^"]*)" element being invisible for (\d+) seconds$/
      */
     public function iWaitForCssElementBeingInvisible($element, $seconds)
     {
@@ -68,13 +79,44 @@ trait ExtraSessionTrait
     }
 
     /**
-     * @When /^I scroll to (\d+) and (\d+)?$/
+     * Click on the element matching given selector
      *
-     * @param int $x
-     * @param int $y
+     * @Given /^I click on element "(?P<selector>[^"]*)"$/
+     *
+     * @param string $selector
+     *
+     * @throws ElementNotFoundException
      */
-    public function scrollTo($x, $y)
+    public function iClickOnCssElement($selector)
     {
-        $this->getSession()->executeScript("(function(){window.scrollTo($x, $y);})();");
+        $page    = $this->getSession()->getPage();
+        $element = $page->find('css', $selector);
+
+        if (null === $element) {
+            throw new ElementNotFoundException($this->getSession()->getDriver(), 'element', 'css', $selector);
+        }
+
+        $element->click();
+    }
+
+    /**
+     * Click on the matching text
+     *
+     * @Given /^I click on (?:link|button) containing "(?P<text>[^"]*)"$/
+     *
+     * @param string $text
+     *
+     * @throws ElementNotFoundException
+     */
+    public function iClickOnText($text)
+    {
+        $page    = $this->getSession()->getPage();
+        $element = $page->find('xpath', sprintf("//*[contains(.,'%s')]", $text));
+
+        if (null === $element) {
+            throw new ElementNotFoundException($this->getSession()->getDriver(), 'text', 'xpath', $text);
+        }
+
+        $element->click();
     }
 }
