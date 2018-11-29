@@ -43,13 +43,15 @@ trait ExtraSessionTrait
      * @param string $element
      * @param int    $seconds
      *
-     * @return bool
-     *
      * @Given /^I wait for "([^"]*)" element being visible for (\d+) seconds$/
      */
     public function iWaitForCssElementBeingVisible($element, $seconds)
     {
-        return $this->getSession()->wait($seconds * 1000, sprintf("$('%s').length >= 1", $element));
+        $result = $this->getSession()->wait($seconds * 1000, sprintf("$('%s').length >= 1", $element));
+
+        if(!$result) {
+            throw new \Exception(sprintf('Element "%s" not found', $element));
+        }
     }
 
     /**
